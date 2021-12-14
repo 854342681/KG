@@ -113,8 +113,8 @@ class generate(discriminate):
         self.count_and_write(temp, flag)  # 将完成的三元组集写入txt中并做统计。
         print(self.seed)
 
-    def reset(self,trip):
-        self.seed = random.randint(0,100000)
+    def reset(self,trip):   # 重置初始节点
+        self.seed = random.randint(0,100000)  # 随机选择种子（即：重新随机选初始节点）
         return  self.start(trip,self.seed)
 
     def start(self,trip,seed):
@@ -221,7 +221,7 @@ if __name__ == '__main__':
             'my_rel.json':None,
             'th_rel.json':None,
             'vi_rel.json':None,
-            'zh_rel.json':None}
+            'zh_rel.json':None}   # 记录正确的初始种子
     path = os.listdir('./T100K')
     if os.path.exists('./T100K/trip') is False:
         os.makedirs('./T100K/trip')
