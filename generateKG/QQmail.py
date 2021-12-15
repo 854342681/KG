@@ -2,11 +2,12 @@
 import smtplib
 from email.mime.text import MIMEText
 from email.header import Header
-from email.mime.multipart import MIMEMultipart
+import os
+import time
 
 
 class Mail:
-    def __init__(self,adress,senders,reciver,title,text,filename):
+    def __init__(self,adress,senders,reciver,title,text):
         # 第三方 SMTP 服务
 
         self.mail_host = "smtp.qq.com"  # 设置服务器:这个是qq邮箱服务器，直接复制就可以
@@ -17,20 +18,17 @@ class Mail:
         self.receiver = reciver
         self.text = text
         self.title = title
-        self.filename = filename
 
     def send(self):
-        message = MIMEMultipart()
-        # MIMEText(content, 'plain', 'utf-8')
+
+        content = self.text   #内容
+        message = MIMEText(content, 'plain', 'utf-8')
 
         message['From'] = Header(self.senders, 'utf-8')
         message['To'] = Header(self.receiver, 'utf-8')
-        message['Subject'] = Header(self.title, 'utf-8')   # 发送的主题，可自由填写（标题）
-        message.attach(MIMEText(self.text, 'plain', 'utf-8'))  #text:内容
-        att = MIMEText(open(self.filename).read(),'base64','utf8')
-        att["Content-Type"] = 'application/octet-stream'
-        att["Content-Disposition"] = f"attachment; filename={self.filename}"
-        message.attach(att)
+
+        subject = self.title  # 发送的主题，可自由填写（标题）
+        message['Subject'] = Header(subject, 'utf-8')
         try:
             smtpObj = smtplib.SMTP_SSL(self.mail_host, 465)
             smtpObj.login(self.sender, self.mail_pass)
@@ -40,13 +38,7 @@ class Mail:
         except smtplib.SMTPException as e:
             print('邮件发送失败')
 
-
-
-
-
-
-
-
-
-
+        # 完成后关机/睡眠
+        time.sleep(10)
+        os.system('shutdown /h /f /t 60')
 
