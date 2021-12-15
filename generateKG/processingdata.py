@@ -3,7 +3,8 @@ import os
 import random
 
 class discriminate():
-    def __call__(self, path):
+    def __call__(self, path,dfine):
+        self.dfine = dfine
         wpath = path.strip('.json').split('/')[2]
         Des,Spe = self.getdic(path)
         trip_des = self.analysis(Des)
@@ -31,9 +32,9 @@ class discriminate():
             data = json.load(f)
         for i,j in data.items():   #区分稠密、稀疏
             tmp_count = len(data[i])
-            if 30 < tmp_count < 200: #稠密
+            if self.dfine < tmp_count: #稠密
                 des[i] = data[i]
-            elif 30> tmp_count:     #稀疏
+            elif self.dfine > tmp_count:     #稀疏
                 spe[i] = data[i]
         print('数据分析完成')
         return des,spe
@@ -60,7 +61,7 @@ class discriminate():
         return tmp
 
     def writeTXT(self,name,value,wpath,flag):
-        with open(f'./T100K/trip/{wpath}_{flag}.txt','a',encoding='utf8') as f:
+        with open(f'../T100K/trip/{wpath}_{flag}.txt','a',encoding='utf8') as f:
             for i,j in value.items():
                 if i == 'labels':
                     f.write('\n' + name + ' \t' + j + ' \n')
@@ -71,15 +72,16 @@ class discriminate():
                     f.write(f'{name} \t{i} \t{j} \n')
 
 class generate(discriminate):
-    def __call__(self, path,inti=4586):
+    def __call__(self, path,inti=4586,des_hop = 3,spe_hop = 3,dfine = None):
+        self.dfine = dfine
         self.path = path
         self.seed = 0
         self.recount = 0
         self.wpath = path.strip('.json').split('/')[2]
         Des, Spe = self.getdic(path)  #生成文件路径
-        self.KGgen(Des,'des',3,inti)
+        self.KGgen(Des,'des',des_hop,inti)
         print('des done')
-        self.KGgen(Spe,'spe',5,inti)
+        self.KGgen(Spe,'spe',spe_hop,inti)
         print('spe done')
 
 
@@ -104,7 +106,7 @@ class generate(discriminate):
                     temp.append(x)   # 加入到知识图谱中
                 start = tmp    # 将新的三元组集合作为下一轮循环的初始集合
             for _ in range(1):
-                if len(temp) < 100 and self.recount < 100:
+                if len(temp) < 15000 and self.recount < 100:
                     print(f'restart: {self.recount}')
                     start = self.reset(trip)
                     restart = True
@@ -158,19 +160,19 @@ class generate(discriminate):
         return temp,False
 
     def count_and_write(self,kg,flag):
-        if os.path.exists(f'./T100K/KG/{flag}') is False:
-            os.makedirs(f'./T100K/KG/{flag}')
+        if os.path.exists(f'../T100K/KG/{flag}') is False:
+            os.makedirs(f'../T100K/KG/{flag}')
         count = len(kg)
-        with open(f'./T100K/KG/{flag}/{self.wpath}.txt','a',encoding='utf8') as f:
+        with open(f'../T100K/KG/{flag}/{self.wpath}.txt','a',encoding='utf8') as f:
             for i in kg:
                 f.write(i[0] + ' \t' + i[1] + ' \t' + i[2] + ' \n')
-        with open(f'./T100K/KG/{flag}/count.txt','a',encoding='utf8') as f:
+        with open(f'../T100K/KG/{flag}/count.txt','a',encoding='utf8') as f:
             f.write(self.wpath + '\t' + str(count) + '\n')
 
 class mapping():
     def __call__(self, path):
         self.wpath = path
-        self.path = f'./T100K/{path}'
+        self.path = f'../T100K/{path}'
         self.index = {}
         self.dataset()
         self.entity_map()
@@ -182,31 +184,31 @@ class mapping():
         for i,j in self.data.items():
             name = j['labels']['value']
             lang = j['labels']['language']
-            self.index[i] = name + f'  ({lang})'
+            self.index[i] = name
     def writeJSON(self):
-        with open(f'./T100K/Map/{self.wpath}','w',encoding='utf8') as f:
+        with open(f'../T100K/Map/{self.wpath}','w',encoding='utf8') as f:
             json.dump(self.index,f)
         print(f'完成{self.wpath}的写入')
 
 
-def Printtrip(path):
+def Printtrip(path,num):
     a = discriminate()
     for i in path:
         if '.json' and '_rel' in i:
-            descount,specount = a(f'./T100K/{i}')
-            with open('./T100K/trip/count.txt','a',encoding='utf8') as f:
+            descount,specount = a(f'../T100K/{i}',num[i])
+            with open('../T100K/trip/count.txt','a',encoding='utf8') as f:
                 f.write(f'{i} \tdes:{descount} \tspe:{specount} \n')
             print(f'-----------------{i} 所有三元组构建完毕！-------------------------\n')
 
 
-def PrintKG(path,seed:dict):
+def PrintKG(path,seed,num):
     b = generate()
     for i in path:
         if '.json' and '_rel' in i and i in seed:
-            if seed[i] is None:
-                b(f'./T100K/{i}')
+            if seed[i]['seed'] is None:
+                b(f'../T100K/{i}',des_hop=seed[i]['des_hop'],spe_hop=seed[i]['spe_hop'],dfine=num[i])
             else:
-                b(f'./T100K/{i}',seed[i])
+                b(f'../T100K/{i}',seed[i]['seed'],des_hop=seed[i]['des_hop'],spe_hop=seed[i]['spe_hop'],dfine=num[i])
             print(f'-------------------------------------{i} is done!-------------------------------------')
 
 def GetMap(path):
@@ -216,21 +218,27 @@ def GetMap(path):
             c(i)
 
 if __name__ == '__main__':
-    seed = {'en_rel.json':None,
-            'lo_rel.json':None,
-            'my_rel.json':None,
-            'th_rel.json':None,
-            'vi_rel.json':None,
-            'zh_rel.json':None}   # 记录正确的初始种子
-    path = os.listdir('./T100K')
-    if os.path.exists('./T100K/trip') is False:
-        os.makedirs('./T100K/trip')
-    if os.path.exists('./T100K/KG') is False:
-        os.makedirs('./T100K/KG')
-    # GetMap(path)
-    Printtrip(path)
-    print('\n稀疏、稠密三元组集构建完成\n')
-    # PrintKG(path,seed)
+    seed = {'en_rel.json':{'seed':31750,'des_hop':3,'spe_hop':10},
+            'lo_rel.json':{'seed':49891,'des_hop':3,'spe_hop':5},
+            'my_rel.json':{'seed':62742,'des_hop':3,'spe_hop':6},
+            'th_rel.json':{'seed':92066,'des_hop':2,'spe_hop':8},
+            'vi_rel.json':{'seed':None,'des_hop':3,'spe_hop':10},
+            'zh_rel.json':{'seed':78335,'des_hop':3,'spe_hop':10}}   # 记录正确的初始种子
+    define = {'en_rel.json':13,
+            'lo_rel.json':30,
+            'my_rel.json':30,
+            'th_rel.json':23,
+            'vi_rel.json':15,
+            'zh_rel.json':16}
+    path = os.listdir('../T100K')
+    if os.path.exists('../T100K/trip') is False:
+        os.makedirs('../T100K/trip')
+    if os.path.exists('../T100K/KG') is False:
+        os.makedirs('../T100K/KG')
+    GetMap(path)
+    # Printtrip(path,define)
+    # print('\n稀疏、稠密三元组集构建完成\n')
+    # PrintKG(path,seed,define)
     # print('\n稀疏、稠密知识图谱构建完成\n')
 
 
