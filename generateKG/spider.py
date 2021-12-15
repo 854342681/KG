@@ -16,10 +16,12 @@ class Producter(threading.Thread):
     def run(self):
         while True:
             if self.id_queue.empty():
+                print('读取完成')
                 break
             else:
                 idx = self.id_queue.get()
                 self.page(idx)
+
 
 
     def page(self,idx):
@@ -29,8 +31,9 @@ class Producter(threading.Thread):
             html = requests.get(url, proxies=pox, timeout=5).text
             html = json.loads(html)['entities'][f'{idx}']
             self.content_queue.put(html)
+            print('读取成功')
         except Exception as e:
-            with open('./db100k/erro.txt','a') as f:      #一般失败的是请求过于频繁造成的无响应，保存进额外的文件中以便之后重新爬取
+            with open('../db100k/erro.txt','a') as f:      #一般失败的是请求过于频繁造成的无响应，保存进额外的文件中以便之后重新爬取
                 f.write(idx + '\n')
             print(f'{idx}获取错误',e)
 
@@ -41,11 +44,12 @@ class Coumser(threading.Thread):
         super(Coumser,self).__init__(*args,**kwargs)
         self.id_queue = id_queue
         self.content_queue = content_queue
-        self.filename = f'./db100k/wikidata_{num}.json'
+        self.filename = f'../db100k/wikidata_{num}.json'
 
     def run(self):
         while True:
             if self.content_queue.empty() and self.id_queue.empty():
+                print('写入完成')
                 break
             else:
                 L = self.content_queue.get()
@@ -54,16 +58,18 @@ class Coumser(threading.Thread):
                 self.content_queue.task_done()
 
 
+
     def writeJSON(self,L,idx):
         try:
             with open(self.filename,'a',encoding='utf8') as f:
                 L = json.dumps(L)
                 f.write(L+'\n')
+                print('写入成功')
         except Exception as e:
             print(f'{idx}写入失败，错误为：    ',e)
 
-id_queue = Queue(20000)   #队列最大数量应大于数据数
-content_queue = Queue(1000)
+id_queue = Queue(200000)   #队列最大数量应大于数据数
+content_queue = Queue(10000)
 def main(index,num):
     for x in index:
         id_queue.put(x)
