@@ -2,7 +2,6 @@ import json
 
 import pymongo
 import time
-import tqdm
 import QQmail
 
 '''
@@ -25,16 +24,11 @@ class getJSON():
 
     def writeJSON(self,lang,r,a):
         with open(f'{self.path}/{lang}_rel.json', 'w', encoding='utf8') as f:
-            # for i,j in r:
-            #     tmp = {i:j}
             json.dump(r, f)
-            #     f.write('\n')
 
         with open(f'{self.path}/{lang}_attr.json', 'w', encoding='utf8') as f:
-            # for i, j in a:
-            #     tmp = {i: j}
             json.dump(a, f)
-            #     f.write('\n')
+
 
     def getValue(self,tmp_rel,tmp_attr,tmp,i,j,dic_path):
         try:
@@ -46,16 +40,59 @@ class getJSON():
         except Exception as e:
             print(f'{j["title"]}   {i}  错误:  ', e)
 
-    def getContext(self,doc,search):
+    '''
+    tmp_rel:
+            "Q371": {
+                "labels": [
+                    {
+                        "language": "zh",
+                        "value": "!!!"
+                    },
+                    {
+                        "language": "th",
+                        "value": "!!!"
+                    }
+                ],
+                "P136_0": {
+                    "datavalue": {
+                        "value": {
+                            "entity-type": "item",
+                            "numeric-id": 1643549,
+                            "id": "Q1643549"
+                        },
+                        "type": "wikibase-entityid"
+                    }
+                }
+        
+        tmp_attr:
+                "Q371": {
+                "labels": [
+                    {
+                        "language": "zh",
+                        "value": "!!!"
+                    },
+                    {
+                        "language": "th",
+                        "value": "!!!"
+                    }
+                ],
+                "P244": {
+                    "attribute": {
+                        "value": "no2005023261",
+                        "type": "string"
+                    }
+                }
+    '''
+    def getContext(self,doc,search,target):
         tmp_rel = {}
         tmp_attr = {}
         for j in doc:
-            lang = j['labels'][search]
+            lang = [j['labels'][search],j['labels'][target]]
             tmp_rel[j['title']] = {'labels': lang}
             tmp_attr[j['title']] = {'labels': lang}
             claims = j['claims']
-            relation = list(claims.keys())
-            for i in relation:
+            relation = list(claims.keys()) # 关系集合
+            for i in relation: # 遍历关系集，如果有重复的则以’_0‘、’_1‘…………结尾作标注。
                 if len(claims[i]) > 1:
                     for m in range(len(claims[i])):
                         tmp = claims[i][m]
@@ -63,8 +100,33 @@ class getJSON():
                 else:
                     tmp = claims[i][0]
                     self.getValue(tmp_rel,tmp_attr,tmp,i,j,i)
-        self.writeJSON(search,tmp_rel,tmp_attr)
+        self.writeJSON(search,target,tmp_rel,tmp_attr)
 
+class makeSeed(getJSON):
+    def __init__(self, col, rel: dict, attr: dict, language: list, path):
+        self.searchlang = [language[0],language[1]]
+        del language[0]
+        del language[0]
+        self.mycol = col
+        self.rel = rel
+        self.attr = attr
+        self.language = language
+        self.path = path
+
+
+    def __call__(self):
+        for i in self.searchlang:
+            for j in self.language:
+                doc = mycol.find({"$and": [{f"labels.{i}": {"$exists": True}},{f"labels.{j}": {"$exists": True}}]}).limit(500)
+                self.getContext(doc, i,j)
+        print('-' * 20, ' Done! ', '-' * 20)
+
+    def writeJSON(self, search,target, r, a):
+        with open(f'{self.path}/{search}_{target}_rel.json', 'w', encoding='utf8') as f:
+            json.dump(r, f)
+
+        with open(f'{self.path}/{search}_{target}_attr.json', 'w', encoding='utf8') as f:
+            json.dump(a, f)
 
 
 
@@ -80,8 +142,10 @@ language = ['zh','en','my','vi','lo','th']
 # with open('./db100k/zh_th_rel.json','r',encoding='utf8') as f:
 #     data = json.load(f)
 
-t = getJSON(mycol,rel,attr,language,'./T100k/addition')
-t()
-mail = QQmail.Mail('854342681@qq.com','2221078665@qq.com','tjf','完成','快回来！')
-mail.send()
-1111
+# t = getJSON(mycol,rel,attr,language,'./T100k/addition')
+# t()
+e = makeSeed(mycol,rel,attr,language,'../T100k/seed')
+e()
+# mail = QQmail.Mail('854342681@qq.com','2221078665@qq.com','tjf','完成','快回来！')
+# mail.send()
+
