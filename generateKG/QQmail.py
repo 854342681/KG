@@ -37,7 +37,6 @@ class Mail:
             print('邮件发送成功')
         except smtplib.SMTPException as e:
             print('邮件发送失败')
-        print('123123123')
         # 完成后关机/睡眠
         time.sleep(10)
         os.system('shutdown /h /f /t 60')
