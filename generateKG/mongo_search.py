@@ -36,7 +36,7 @@ class getJSON():
             if datavalue['type'] == 'wikibase-entityid':  #有关系时记录为‘关系’
                 tmp_rel[j['title']][dic_path] = {'datavalue': datavalue}
             else:
-                tmp_attr[j['title']][dic_path] = {'attribute': datavalue} #其余记录为‘属性’
+                tmp_attr[j['title']][dic_path] = {'datavalue': datavalue} #其余记录为‘属性’
         except Exception as e:
             print(f'{j["title"]}   {i}  错误:  ', e)
 
@@ -83,11 +83,11 @@ class getJSON():
                     }
                 }
     '''
-    def getContext(self,doc,search,target):
+    def getContext(self,doc,x):
         tmp_rel = {}
         tmp_attr = {}
         for j in doc:
-            lang = [j['labels'][search],j['labels'][target]]
+            lang = j['labels'][x]
             tmp_rel[j['title']] = {'labels': lang}
             tmp_attr[j['title']] = {'labels': lang}
             claims = j['claims']
@@ -100,9 +100,12 @@ class getJSON():
                 else:
                     tmp = claims[i][0]
                     self.getValue(tmp_rel,tmp_attr,tmp,i,j,i)
-        self.writeJSON(search,target,tmp_rel,tmp_attr)
+        self.writeJSON(x,tmp_rel,tmp_attr)
 
-class makeSeed(getJSON):
+'''
+获取种子（两个语言都有的实体为种子）
+'''
+class makeSeed():
     def __init__(self, col, rel: dict, attr: dict, language: list, path):
         self.searchlang = [language[0],language[1]]
         del language[0]
@@ -128,6 +131,34 @@ class makeSeed(getJSON):
         with open(f'{self.path}/{search}_{target}_attr.json', 'w', encoding='utf8') as f:
             json.dump(a, f)
 
+    def getContext(self,doc,search,target):
+        tmp_rel = {}
+        tmp_attr = {}
+        for j in doc:
+            lang = [j['labels'][search],j['labels'][target]]
+            tmp_rel[j['title']] = {'labels': lang}
+            tmp_attr[j['title']] = {'labels': lang}
+            claims = j['claims']
+            relation = list(claims.keys()) # 关系集合
+            for i in relation: # 遍历关系集，如果有重复的则以’_0‘、’_1‘…………结尾作标注。
+                if len(claims[i]) > 1:
+                    for m in range(len(claims[i])):
+                        tmp = claims[i][m]
+                        self.getValue(tmp_rel,tmp_attr,tmp,i,j,f'{i}_{m}')
+                else:
+                    tmp = claims[i][0]
+                    self.getValue(tmp_rel,tmp_attr,tmp,i,j,i)
+        self.writeJSON(search,target,tmp_rel,tmp_attr)
+
+    def getValue(self,tmp_rel,tmp_attr,tmp,i,j,dic_path):
+        try:
+            datavalue = tmp['mainsnak']['datavalue']
+            if datavalue['type'] == 'wikibase-entityid':  #有关系时记录为‘关系’
+                tmp_rel[j['title']][dic_path] = {'datavalue': datavalue}
+            else:
+                tmp_attr[j['title']][dic_path] = {'datavalue': datavalue} #其余记录为‘属性’
+        except Exception as e:
+            print(f'{j["title"]}   {i}  错误:  ', e)
 
 
 
@@ -139,13 +170,10 @@ mycol = mydb["db_lan"]
 rel = {}
 attr = {}
 language = ['zh','en','my','vi','lo','th']
-# with open('./db100k/zh_th_rel.json','r',encoding='utf8') as f:
-#     data = json.load(f)
-
-# t = getJSON(mycol,rel,attr,language,'./T100k/addition')
-# t()
+t = getJSON(mycol,rel,attr,language,'./T100k/')
+t()
 e = makeSeed(mycol,rel,attr,language,'../T100k/seed')
 e()
-# mail = QQmail.Mail('854342681@qq.com','2221078665@qq.com','tjf','完成','快回来！')
-# mail.send()
+mail = QQmail.Mail('854342681@qq.com','2221078665@qq.com','tjf','完成','快回来！')
+mail.send()
 
