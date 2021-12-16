@@ -29,11 +29,11 @@ for i in path:
                     fail.append(name.group(0))
                 except:
                     pass
-                # print(e)
-        # if count == 1000:   # 性能原因无法在内存中存储过多的数据，每存1000个上传一次并清空集合
-        #     result = mycol.insert_many(insert)
-        #     insert = []
-        #     print('done')
+                print(e)
+        if count == 1000:   # 性能原因无法在内存中存储过多的数据，每存1000个上传一次并清空集合
+            result = mycol.insert_many(insert)
+            insert = []
+            print('done')
 with open('../db100k/fail.txt','w',encoding='utf8') as f:
     for i in fail:
         f.write(i)
