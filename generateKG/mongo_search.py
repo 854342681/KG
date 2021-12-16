@@ -1,7 +1,5 @@
 import json
-
 import pymongo
-import time
 import QQmail
 
 '''
@@ -170,7 +168,7 @@ mycol = mydb["db_lan"]
 rel = {}
 attr = {}
 language = ['zh','en','my','vi','lo','th']
-t = getJSON(mycol,rel,attr,language,'./T100k/')
+t = getJSON(mycol,rel,attr,language,'../T100k/')
 t()
 e = makeSeed(mycol,rel,attr,language,'../T100k/seed')
 e()

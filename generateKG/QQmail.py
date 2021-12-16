@@ -39,5 +39,5 @@ class Mail:
             print('邮件发送失败')
         # 完成后关机/睡眠
         time.sleep(10)
-        os.system('shutdown /h /f /t 60')
+        os.system('shutdown /s /f /t 60')
 
