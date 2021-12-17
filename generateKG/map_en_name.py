@@ -12,7 +12,8 @@ import tqdm
     无映射ID表，在'../T100K/Map/fail'文件夹下
 '''
 class map_en_name():
-    def __call__(self,en_path,map_path):
+    def __call__(self,en_path,map_path,des):
+        self.i = des
         self.map_path = map_path
         self.en_path = en_path
         map_data = self.readJSON(self.map_path)  # 读取JSON   map_data(dict) =  {'Q4712436': 'Șimon River', 'Q865639': 'Șoldănești District', 'Q4711738': 'Șușița River', 'Q3291734': 'Șușița River', 'Q213984': 'חרה', 'Q3596267': '’Til Tuesday'}
@@ -53,15 +54,17 @@ class map_en_name():
             for x in i:                         # 遍历三元组中的每个元素进行映射
                 if x in md:                     # 如果映射集中有则替换
                     tmp.append(md[x])
-                elif x not in md and 'Q' in x:  # 如果是Q实体，但是映射集中没有映射，则输出本身，并且记录成TXT
-                    tmp.append(x)
+                elif x not in md and 'Q' in x:  # 如果是Q实体，但是映射集中没有映射，则舍弃此三元组，并且记录TXT
+                    tmp = None
                     fail.append(x)
+                    continue
                 else:                           # 剩下的为P关系，输出本身
                     tmp.append(x)
-            result.append(tmp)
+            if tmp is not None:
+                result.append(tmp)
         fail = list(set(fail))
         for i in fail:
-            with open(f'../T100K/Map/fail/{wpath}', 'a') as f:
+            with open(f'../T100K/Map/fail/{self.i}_{wpath}', 'a') as f:
                 f.write(i + '\n')
         print('映射完毕')
         return result
@@ -73,16 +76,21 @@ if __name__ == '__main__':
     a = map_en_name()
     map_list = os.listdir(map_dir)
     en_list = os.listdir(en_dir)
+    count = []
     del map_list[map_list.index('fail')]
+    del en_list[en_list.index('maptrip')]
     for i in en_list:
         tmp = os.listdir(f'{en_dir}/{i}')
         del tmp[tmp.index('count.txt')]
         for x,z in zip(tmp,map_list):
             en_path = en_dir + '/' + i + '/' + x
             map_path = map_dir + '/' + z
-            temp = a(en_path,map_path)
-            final_trip[x] = temp
+            temp = a(en_path,map_path,i)
+            count.append(len(temp))
+            with open(f'../T100k/KG/maptrip/{i}/{z}','w',encoding='utf8') as f:
+                json.dump(temp,f)
+            # final_trip[f'{i}_' + x] = temp
             print(f'{x}到{z}的实体名称映射完毕')
-    with open('../T100K/KG/mapping.json','w',encoding='utf8') as f:
-        json.dump(final_trip,f)
+    # with open('../T100K/KG/mapping.json','w',encoding='utf8') as f:
+    #     json.dump(final_trip,f)
     print('done')
