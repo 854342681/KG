@@ -105,8 +105,10 @@ class generate(discriminate):
                 for x in tmp:
                     temp.append(x)   # 加入到知识图谱中
                 start = tmp    # 将新的三元组集合作为下一轮循环的初始集合
+                if len(temp) >= 50000:
+                    break
             for _ in range(1):
-                if len(temp) < 15000 and self.recount < 1000:
+                if len(temp) < 30000 and self.recount < 1000:
                     print(f'restart: {self.recount}')
                     start = self.reset(trip)
                     restart = True
@@ -218,12 +220,12 @@ def GetMap(path):
             c(i)
 
 if __name__ == '__main__':
-    seed = {'en_rel.json':{'seed':6709,'des_hop':3,'spe_hop':11},
-            'lo_rel.json':{'seed':50208,'des_hop':3,'spe_hop':8},
-            'my_rel.json':{'seed':28560,'des_hop':3,'spe_hop':6},
-            'th_rel.json':{'seed':73165,'des_hop':2,'spe_hop':8},
-            'vi_rel.json':{'seed':74390,'des_hop':3,'spe_hop':10},
-            'zh_rel.json':{'seed':54885,'des_hop':3,'spe_hop':10}}   # 记录正确的初始种子
+    seed = {'en_rel.json':{'seed':20172,'des_hop':2,'spe_hop':13},
+            'lo_rel.json':{'seed':18003,'des_hop':2,'spe_hop':8},
+            'my_rel.json':{'seed':11364,'des_hop':3,'spe_hop':6},
+            'th_rel.json':{'seed':29090,'des_hop':2,'spe_hop':8},
+            'vi_rel.json':{'seed':46295,'des_hop':2,'spe_hop':10},
+            'zh_rel.json':{'seed':32213,'des_hop':2,'spe_hop':5}}   # 记录正确的初始种子
     define = {'en_rel.json':9,
             'lo_rel.json':20,
             'my_rel.json':20,
