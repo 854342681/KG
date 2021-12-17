@@ -106,7 +106,7 @@ class generate(discriminate):
                     temp.append(x)   # 加入到知识图谱中
                 start = tmp    # 将新的三元组集合作为下一轮循环的初始集合
             for _ in range(1):
-                if len(temp) < 15000 and self.recount < 100:
+                if len(temp) < 15000 and self.recount < 1000:
                     print(f'restart: {self.recount}')
                     start = self.reset(trip)
                     restart = True
@@ -183,7 +183,7 @@ class mapping():
     def entity_map(self):
         for i,j in self.data.items():
             name = j['labels']['value']
-            lang = j['labels']['language']
+            lang = (j['labels']['language'])
             self.index[i] = name
     def writeJSON(self):
         with open(f'../T100K/Map/{self.wpath}','w',encoding='utf8') as f:
@@ -218,28 +218,28 @@ def GetMap(path):
             c(i)
 
 if __name__ == '__main__':
-    seed = {'en_rel.json':{'seed':31750,'des_hop':3,'spe_hop':10},
-            'lo_rel.json':{'seed':49891,'des_hop':3,'spe_hop':5},
-            'my_rel.json':{'seed':62742,'des_hop':3,'spe_hop':6},
-            'th_rel.json':{'seed':92066,'des_hop':2,'spe_hop':8},
-            'vi_rel.json':{'seed':None,'des_hop':3,'spe_hop':10},
-            'zh_rel.json':{'seed':78335,'des_hop':3,'spe_hop':10}}   # 记录正确的初始种子
-    define = {'en_rel.json':13,
-            'lo_rel.json':30,
-            'my_rel.json':30,
-            'th_rel.json':23,
-            'vi_rel.json':15,
-            'zh_rel.json':16}
+    seed = {'en_rel.json':{'seed':6709,'des_hop':3,'spe_hop':11},
+            'lo_rel.json':{'seed':50208,'des_hop':3,'spe_hop':8},
+            'my_rel.json':{'seed':28560,'des_hop':3,'spe_hop':6},
+            'th_rel.json':{'seed':73165,'des_hop':2,'spe_hop':8},
+            'vi_rel.json':{'seed':74390,'des_hop':3,'spe_hop':10},
+            'zh_rel.json':{'seed':54885,'des_hop':3,'spe_hop':10}}   # 记录正确的初始种子
+    define = {'en_rel.json':9,
+            'lo_rel.json':20,
+            'my_rel.json':20,
+            'th_rel.json':18,
+            'vi_rel.json':13,
+            'zh_rel.json':13}
     path = os.listdir('../T100K')
     if os.path.exists('../T100K/trip') is False:
         os.makedirs('../T100K/trip')
     if os.path.exists('../T100K/KG') is False:
         os.makedirs('../T100K/KG')
-    GetMap(path)
+    # GetMap(path)
     # Printtrip(path,define)
     # print('\n稀疏、稠密三元组集构建完成\n')
-    # PrintKG(path,seed,define)
-    # print('\n稀疏、稠密知识图谱构建完成\n')
+    PrintKG(path,seed,define)
+    print('\n稀疏、稠密知识图谱构建完成\n')
 
 
 
