@@ -33,7 +33,7 @@ class Producter(threading.Thread):
             self.content_queue.put(html)
             print('读取成功')
         except Exception as e:
-            with open('../db100k/erro.txt','a') as f:      #一般失败的是请求过于频繁造成的无响应，保存进额外的文件中以便之后重新爬取
+            with open('../db100k/erro_1.txt','a') as f:      #一般失败的是请求过于频繁造成的无响应，保存进额外的文件中以便之后重新爬取
                 f.write(idx + '\n')
             print(f'{idx}获取错误',e)
 
